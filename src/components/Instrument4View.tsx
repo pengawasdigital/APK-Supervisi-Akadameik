@@ -1,0 +1,1115 @@
+import React, { useState, useEffect } from 'react';
+import {
+  AppSupervisionData,
+  Instrument4PascaObservasi,
+  PascaRefleksiGuru,
+  PascaUmpanBalik,
+  PascaRencanaTindakLanjut,
+} from '../types/supervision';
+import { KopSurat } from './KopSurat';
+import { SignatureBlock } from './SignatureBlock';
+import { TeacherSelector } from './TeacherSelector';
+import {
+  CheckCircle,
+  Save,
+  Printer,
+  Calendar,
+  MessageSquareQuote,
+  Smile,
+  Check,
+  AlertOctagon,
+  Sparkles,
+  HelpCircle,
+  Plus,
+  Trash2,
+  ListTodo,
+  FileText,
+  ArrowRight,
+  AlertCircle,
+  BarChart3,
+} from 'lucide-react';
+import { PrintModal } from './PrintModal';
+
+interface Instrument4ViewProps {
+  data: AppSupervisionData;
+  selectedTeacherId: string;
+  onSelectTeacher: (id: string) => void;
+  onSaveInstrument: (record: Instrument4PascaObservasi) => void;
+  onNavigateNext?: () => void;
+}
+
+export const Instrument4View: React.FC<Instrument4ViewProps> = ({
+  data,
+  selectedTeacherId,
+  onSelectTeacher,
+  onSaveInstrument,
+  onNavigateNext,
+}) => {
+  const { school, teachers, instrumen4 } = data;
+  const currentTeacher = teachers.find((t) => t.id === selectedTeacherId) || teachers[0];
+
+  const defaultRefleksi: PascaRefleksiGuru = {
+    perasaan: 'Sangat bersyukur dan antusias melihat respons aktif murid dalam proses eksplorasi materi.',
+    halBaik: 'Diskusi kelompok dan integrasi media digital interaktif terlaksana sesuai tahapan modul ajar.',
+    tantangan: 'Memerlukan teknik pengelolaan alokasi waktu presentasi agar seluruh kelompok memiliki kesempatan bertanya berimbang.',
+    responMurid: 'Sangat positif, 90% murid berpartisipasi dalam pengerjaan lembar unjuk pemahaman kolaboratif.',
+    rencanaPerbaikan: 'Menerapkan penugasan berjenjang (tiered assignment) untuk mengakomodasi keberagaman kecepatan belajar.',
+  };
+
+  const defaultUmpanBalik: PascaUmpanBalik[] = [
+    {
+      id: 'ub-1',
+      aspek: '1. Perencanaan Pembelajaran',
+      kekuatan: 'Modul ajar memuat alur berpikir mendalam (Deep Learning) dan rubrik penilaian terlampir jelas.',
+      areaPengembangan: 'Menyediakan materi pengayaan kontekstual bagi murid berkemampuan tinggi.',
+    },
+    {
+      id: 'ub-2',
+      aspek: '2. Pelaksanaan Pembelajaran',
+      kekuatan: 'Apersepsi kontekstual dan pertanyaan pemantik sangat efektif menggugah nalar kritis kelas.',
+      areaPengembangan: 'Mempertahankan ritme waktu diskusi agar sesi tanya jawab tidak terburu-buru.',
+    },
+    {
+      id: 'ub-3',
+      aspek: '3. Pengelolaan Kelas',
+      kekuatan: 'Suasana kelas inklusif, ramah, dan guru membimbing seluruh kelompok secara adil tanpa diskriminasi.',
+      areaPengembangan: 'Mempertegas kesepakatan penggunaan gawai untuk fokus referensi pembelajaran.',
+    },
+    {
+      id: 'ub-4',
+      aspek: '4. Asesmen Pembelajaran',
+      kekuatan: 'Umpan balik formatif langsung diberikan kepada kelompok yang mengalami miskonsepsi.',
+      areaPengembangan: 'Mengembangkan instrumen asesmen antarteman (peer-review) sederhana.',
+    },
+    {
+      id: 'ub-5',
+      aspek: '5. Refleksi & Tindak Lanjut',
+      kekuatan: 'Guru memiliki sikap reflektif tinggi dan sangat terbuka terhadap masukan peningkatan mutu.',
+      areaPengembangan: 'Mendokumentasikan praktik baik ini untuk dibagikan dalam Komunitas Belajar sekolah.',
+    },
+  ];
+
+  const defaultRTL: PascaRencanaTindakLanjut[] = [
+    {
+      id: 'rtl-1',
+      aspek: '1. Perencanaan',
+      tindakLanjut: 'Menyempurnakan variasi rubrik asesmen formatif dan LKPD berdiferensiasi',
+      penanggungJawab: 'Guru Mata Pelajaran',
+      waktuPelaksanaan: '2 Minggu ke depan',
+      status: 'Selesai',
+    },
+    {
+      id: 'rtl-2',
+      aspek: '2. Pelaksanaan',
+      tindakLanjut: 'Menerapkan timer digital terpusat untuk membatasi presentasi dan memaksimalkan tanya jawab',
+      penanggungJawab: 'Guru Mata Pelajaran',
+      waktuPelaksanaan: 'Pertemuan berikutnya',
+      status: 'Dalam Proses',
+    },
+    {
+      id: 'rtl-3',
+      aspek: '3. Pengelolaan Kelas',
+      tindakLanjut: 'Meninjau kembali kesepakatan kelas terkait kedisiplinan dan apresiasi kelompok',
+      penanggungJawab: 'Guru & Wali Kelas',
+      waktuPelaksanaan: 'Awal bulan depan',
+      status: 'Direncanakan',
+    },
+    {
+      id: 'rtl-4',
+      aspek: '4. Asesmen',
+      tindakLanjut: 'Merancang lembar penilaian diri (self-assessment) pada akhir lingkup materi',
+      penanggungJawab: 'Guru Mata Pelajaran',
+      waktuPelaksanaan: 'Bulan berjalan',
+      status: 'Direncanakan',
+    },
+    {
+      id: 'rtl-5',
+      aspek: '5. Pengembangan Profesional Guru',
+      tindakLanjut: 'Mengikuti webinar kurikulum merdeka dan berbagi praktik baik di Kombel Sekolah',
+      penanggungJawab: 'Guru & Tim Kombel',
+      waktuPelaksanaan: 'Semester berjalan',
+      status: 'Direncanakan',
+    },
+  ];
+
+  const emptyRefleksi: PascaRefleksiGuru = {
+    perasaan: '',
+    halBaik: '',
+    tantangan: '',
+    responMurid: '',
+    rencanaPerbaikan: '',
+  };
+
+  const emptyUmpanBalik: PascaUmpanBalik[] = [
+    {
+      id: 'ub-1',
+      aspek: '1. Perencanaan Pembelajaran',
+      kekuatan: '',
+      areaPengembangan: '',
+    },
+    {
+      id: 'ub-2',
+      aspek: '2. Pelaksanaan Pembelajaran',
+      kekuatan: '',
+      areaPengembangan: '',
+    },
+    {
+      id: 'ub-3',
+      aspek: '3. Pengelolaan Kelas',
+      kekuatan: '',
+      areaPengembangan: '',
+    },
+    {
+      id: 'ub-4',
+      aspek: '4. Asesmen Pembelajaran',
+      kekuatan: '',
+      areaPengembangan: '',
+    },
+    {
+      id: 'ub-5',
+      aspek: '5. Refleksi & Tindak Lanjut',
+      kekuatan: '',
+      areaPengembangan: '',
+    },
+  ];
+
+  const emptyRTL: PascaRencanaTindakLanjut[] = [
+    {
+      id: 'rtl-1',
+      aspek: '1. Perencanaan',
+      tindakLanjut: '',
+      penanggungJawab: 'Guru Mata Pelajaran',
+      waktuPelaksanaan: '',
+      status: 'Direncanakan',
+    },
+    {
+      id: 'rtl-2',
+      aspek: '2. Pelaksanaan',
+      tindakLanjut: '',
+      penanggungJawab: 'Guru Mata Pelajaran',
+      waktuPelaksanaan: '',
+      status: 'Direncanakan',
+    },
+    {
+      id: 'rtl-3',
+      aspek: '3. Pengelolaan Kelas',
+      tindakLanjut: '',
+      penanggungJawab: 'Guru & Wali Kelas',
+      waktuPelaksanaan: '',
+      status: 'Direncanakan',
+    },
+    {
+      id: 'rtl-4',
+      aspek: '4. Asesmen',
+      tindakLanjut: '',
+      penanggungJawab: 'Guru Mata Pelajaran',
+      waktuPelaksanaan: '',
+      status: 'Direncanakan',
+    },
+    {
+      id: 'rtl-5',
+      aspek: '5. Pengembangan Profesional Guru',
+      tindakLanjut: '',
+      penanggungJawab: 'Guru & Tim Kombel',
+      waktuPelaksanaan: '',
+      status: 'Direncanakan',
+    },
+  ];
+
+  const normalizeRTL = (rtls: PascaRencanaTindakLanjut[] | undefined): PascaRencanaTindakLanjut[] => {
+    const targetAspects = [
+      '1. Perencanaan',
+      '2. Pelaksanaan',
+      '3. Pengelolaan Kelas',
+      '4. Asesmen',
+      '5. Pengembangan Profesional Guru',
+    ];
+
+    if (!rtls || rtls.length === 0) return emptyRTL;
+
+    return targetAspects.map((aspectName, idx) => {
+      const existing = rtls.find((r) => {
+        const a = (r.aspek || '').toLowerCase();
+        if (idx === 0 && (a.includes('perencanaan') || a.startsWith('1.'))) return true;
+        if (idx === 1 && (a.includes('pelaksanaan') || a.startsWith('2.'))) return true;
+        if (idx === 2 && (a.includes('pengelolaan') || a.startsWith('3.'))) return true;
+        if (idx === 3 && (a.includes('asesmen') || a.startsWith('4.'))) return true;
+        if (idx === 4 && (a.includes('profesional') || a.includes('pkb') || a.startsWith('5.'))) return true;
+        return false;
+      }) || rtls[idx];
+
+      if (existing) {
+        return {
+          ...existing,
+          aspek: aspectName,
+        };
+      }
+      return emptyRTL[idx];
+    });
+  };
+
+  const [formData, setFormData] = useState<Instrument4PascaObservasi>(() => {
+    const existing = instrumen4[selectedTeacherId];
+    if (existing) {
+      return {
+        ...existing,
+        rencanaTindakLanjut: normalizeRTL(existing.rencanaTindakLanjut),
+      };
+    }
+
+    return {
+      id: `inst4-${selectedTeacherId}`,
+      teacherId: selectedTeacherId,
+      tanggalKegiatan: new Date().toISOString().split('T')[0],
+      refleksiGuru: emptyRefleksi,
+      umpanBalik: emptyUmpanBalik,
+      rencanaTindakLanjut: emptyRTL,
+      catatanSupervisor: '',
+      kesepakatanBersama: '',
+      ttdPengawas: false,
+      ttdKepalaSekolah: false,
+      ttdGuru: false,
+      isCompleted: false,
+      updatedAt: new Date().toISOString(),
+    };
+  });
+
+  const [savedAlert, setSavedAlert] = useState(false);
+  const [validationAlert, setValidationAlert] = useState<string | null>(null);
+  const [isSavedAndComplete, setIsSavedAndComplete] = useState<boolean>(() => {
+    return !!instrumen4[selectedTeacherId]?.isCompleted;
+  });
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [isPrintBlank, setIsPrintBlank] = useState(false);
+
+  const handleTriggerPrint = (isBlank: boolean) => {
+    setIsPrintBlank(isBlank);
+    setShowPrintModal(false);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+  useEffect(() => {
+    const existing = instrumen4[selectedTeacherId];
+    if (existing) {
+      setFormData({
+        ...existing,
+        rencanaTindakLanjut: normalizeRTL(existing.rencanaTindakLanjut),
+      });
+      setIsSavedAndComplete(!!existing.isCompleted);
+    } else {
+      setFormData({
+        id: `inst4-${selectedTeacherId}`,
+        teacherId: selectedTeacherId,
+        tanggalKegiatan: new Date().toISOString().split('T')[0],
+        refleksiGuru: emptyRefleksi,
+        umpanBalik: emptyUmpanBalik,
+        rencanaTindakLanjut: emptyRTL,
+        catatanSupervisor: '',
+        kesepakatanBersama: '',
+        ttdPengawas: false,
+        ttdKepalaSekolah: false,
+        ttdGuru: false,
+        isCompleted: false,
+        updatedAt: new Date().toISOString(),
+      });
+      setIsSavedAndComplete(false);
+    }
+    setValidationAlert(null);
+  }, [selectedTeacherId, instrumen4]);
+
+  const handleClearForm = () => {
+    setFormData((prev) => ({
+      ...prev,
+      refleksiGuru: emptyRefleksi,
+      umpanBalik: emptyUmpanBalik,
+      rencanaTindakLanjut: emptyRTL,
+      catatanSupervisor: '',
+      kesepakatanBersama: '',
+      isCompleted: false,
+    }));
+    setIsSavedAndComplete(false);
+  };
+
+  const handleRefleksiChange = (field: keyof PascaRefleksiGuru, val: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      refleksiGuru: {
+        ...prev.refleksiGuru,
+        [field]: val,
+      },
+    }));
+  };
+
+  const handleUmpanBalikChange = (id: string, field: 'kekuatan' | 'areaPengembangan', val: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      umpanBalik: prev.umpanBalik.map((item) => (item.id === id ? { ...item, [field]: val } : item)),
+    }));
+  };
+
+  const handleRTLChange = (
+    id: string,
+    field: keyof PascaRencanaTindakLanjut,
+    val: string
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      rencanaTindakLanjut: prev.rencanaTindakLanjut.map((item) =>
+        item.id === id ? { ...item, [field]: val } : item
+      ),
+    }));
+  };
+
+  const handleAddRTL = () => {
+    const newItem: PascaRencanaTindakLanjut = {
+      id: `rtl-custom-${Date.now()}`,
+      aspek: 'Pengembangan Tambahan',
+      tindakLanjut: '',
+      penanggungJawab: 'Guru Mata Pelajaran',
+      waktuPelaksanaan: '1 Bulan ke depan',
+      status: 'Direncanakan',
+    };
+    setFormData((prev) => ({
+      ...prev,
+      rencanaTindakLanjut: [...prev.rencanaTindakLanjut, newItem],
+    }));
+  };
+
+  const handleDeleteRTL = (id: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      rencanaTindakLanjut: prev.rencanaTindakLanjut.filter((item) => item.id !== id),
+    }));
+  };
+
+  const checkCompletion = () => {
+    const errors: string[] = [];
+
+    // Validasi Refleksi Guru (Bagian A)
+    const { perasaan, halBaik, tantangan, responMurid, rencanaPerbaikan } = formData.refleksiGuru;
+    if (
+      !perasaan?.trim() ||
+      !halBaik?.trim() ||
+      !tantangan?.trim() ||
+      !responMurid?.trim() ||
+      !rencanaPerbaikan?.trim()
+    ) {
+      errors.push('Pertanyaan Refleksi Guru (Bagian A) belum lengkap diisi.');
+    }
+
+    // Validasi Umpan Balik Supervisor (Bagian B)
+    const emptyUB = formData.umpanBalik.some(
+      (ub) => !ub.kekuatan?.trim() || !ub.areaPengembangan?.trim()
+    );
+    if (emptyUB) {
+      errors.push('Catatan Umpan Balik Supervisor: Kekuatan & Area Pengembangan (Bagian B) belum lengkap diisi.');
+    }
+
+    // Validasi Rencana Tindak Lanjut (Bagian C)
+    if (!formData.rencanaTindakLanjut || formData.rencanaTindakLanjut.length === 0) {
+      errors.push('Tabel Rencana Tindak Lanjut (Bagian C) masih kosong.');
+    } else {
+      const emptyRTL = formData.rencanaTindakLanjut.some(
+        (rtl) => !rtl.tindakLanjut?.trim() || !rtl.waktuPelaksanaan?.trim()
+      );
+      if (emptyRTL) {
+        errors.push('Tabel Rencana Tindak Lanjut: Kolom Kegiatan atau Waktu Pelaksanaan (Bagian C) belum lengkap diisi.');
+      }
+    }
+
+    // Validasi Catatan Penutup & Kesepakatan (Bagian D)
+    if (!formData.catatanSupervisor?.trim()) {
+      errors.push('Catatan Pengawas/Kepala Sekolah (Bagian D) belum diisi.');
+    }
+    if (!formData.kesepakatanBersama?.trim()) {
+      errors.push('Kesepakatan Bersama untuk Supervisi Lanjutan (Bagian D) belum diisi.');
+    }
+
+    return {
+      isComplete: errors.length === 0,
+      errors,
+    };
+  };
+
+  const handleSave = () => {
+    const validation = checkCompletion();
+    if (!validation.isComplete) {
+      setValidationAlert(validation.errors.join(' '));
+      setSavedAlert(false);
+      setTimeout(() => setValidationAlert(null), 5000);
+      return;
+    }
+
+    const updated: Instrument4PascaObservasi = {
+      ...formData,
+      isCompleted: true,
+      updatedAt: new Date().toISOString(),
+    };
+    onSaveInstrument(updated);
+    setValidationAlert(null);
+    setSavedAlert(true);
+    setIsSavedAndComplete(true);
+    setTimeout(() => setSavedAlert(false), 2500);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Toast Notifikasi Berhasil Simpan Berkas */}
+      {savedAlert && (
+        <div className="fixed bottom-6 right-6 z-50 print:hidden animate-bounce flex items-center gap-2.5 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-lg border border-emerald-400">
+          <CheckCircle className="w-5 h-5 text-white shrink-0" />
+          <div>
+            <p className="font-bold text-sm">Berhasil Simpan Berkas</p>
+            <p className="text-[11px] text-emerald-100">Instrumen 4 & RTL untuk {currentTeacher.namaGuru} tersimpan</p>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notifikasi Isian Belum Lengkap */}
+      {validationAlert && (
+        <div className="fixed bottom-6 right-6 z-50 print:hidden animate-bounce flex items-start gap-2.5 bg-rose-600 text-white px-4 py-3 rounded-xl shadow-xl border border-rose-400 max-w-md">
+          <AlertCircle className="w-5 h-5 text-white shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-sm">Isian Belum Lengkap!</p>
+            <p className="text-xs text-rose-100 mt-0.5">{validationAlert}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Printable Kop Surat */}
+      <div className="hidden print:block">
+        <KopSurat
+          school={school}
+          documentTitle="INSTRUMEN 4: LEMBAR PASCA OBSERVASI & RENCANA TINDAK LANJUT SUPERVISI"
+          subTitle={`Tahun Ajaran ${school.tahunAjaran} - Semester ${school.semester}`}
+          nomorSurat={`424.0 / ${school.npsn} / INST-PASCA / 2024`}
+        />
+      </div>
+
+      {/* Teacher Selection & Controls */}
+      <div className="print:hidden space-y-4">
+        <TeacherSelector
+          teachers={teachers}
+          selectedTeacherId={selectedTeacherId}
+          onSelectTeacher={onSelectTeacher}
+          label="Pilih Guru untuk Sesi Pasca Observasi:"
+        />
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs text-slate-600">
+            <span className="font-semibold">Format Pendampingan:</span>
+            <span className="px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200 font-medium">
+              Coaching & Percakapan Reflektif
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {savedAlert && (
+              <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300 flex items-center gap-1.5 animate-fadeIn">
+                <CheckCircle className="w-4 h-4 text-emerald-600" /> Berhasil Simpan Berkas
+              </span>
+            )}
+            <button
+              onClick={handleClearForm}
+              className="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 transition-colors"
+              title="Kosongkan seluruh isian dan mulai sesi refleksi baru"
+            >
+              Kosongkan Form
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs md:text-sm font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
+            >
+              <Save className="w-4 h-4" />
+              <span>Simpan Instrumen</span>
+            </button>
+            <button
+              disabled={!isSavedAndComplete}
+              onClick={onNavigateNext}
+              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-1.5 transition-all ${
+                isSavedAndComplete
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-xs cursor-pointer'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+              }`}
+              title={isSavedAndComplete ? 'Lanjut ke Rekapitulasi & Analisis' : 'Simpan instrumen dengan isian lengkap terlebih dahulu'}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>Rekapitulasi & Analisis</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setShowPrintModal(true)}
+              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs md:text-sm font-semibold flex items-center gap-1.5 transition-colors shadow-2xs hover:shadow-xs"
+              title="Cetak dokumen terisi atau blangko kosong dalam format PDF"
+            >
+              <Printer className="w-4 h-4 text-sky-400" />
+              <span>Cetak Form (PDF)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Official Identity Sheet */}
+      <div className="bg-white p-5 md:p-6 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="border-b border-slate-200 pb-3 mb-4">
+          <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+            <MessageSquareQuote className="w-5 h-5 text-indigo-600 print:hidden" />
+            <span>IDENTITAS DISKUSI PASCA OBSERVASI SUPERVISI</span>
+          </h3>
+          <p className="text-xs text-slate-500">
+            Percakapan coaching berbasis apresiasi, refleksi kesadaran diri, dan komitmen pengembangan profesional
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2.5 text-sm md:text-base">
+          <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <span className="font-semibold text-slate-700">1. Nama Satuan Pendidikan</span>
+            <span className="font-bold text-slate-900">{school.namaSekolah}</span>
+          </div>
+          <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <span className="font-semibold text-slate-700">2. Nama Guru yang Disupervisi</span>
+            <span className="font-bold text-slate-900">{currentTeacher.namaGuru}</span>
+          </div>
+          <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <span className="font-semibold text-slate-700">3. Mata Pelajaran</span>
+            <span className="font-bold text-indigo-700">{currentTeacher.mataPelajaran}</span>
+          </div>
+          <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <span className="font-semibold text-slate-700">4. Kelas / Fase</span>
+            <span className="text-slate-900">{currentTeacher.kelasFase}</span>
+          </div>
+          <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <span className="font-semibold text-slate-700">5. Nama Supervisor / Pengawas</span>
+            <span className="text-slate-900">{school.namaPengawas}</span>
+          </div>
+          <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <span className="font-semibold text-slate-700">6. Tanggal Diskusi Pasca Observasi</span>
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-slate-400 print:hidden" />
+              <input
+                type="date"
+                value={formData.tanggalKegiatan}
+                onChange={(e) => setFormData({ ...formData, tanggalKegiatan: e.target.value })}
+                className="font-medium text-slate-900 bg-transparent border-0 p-0 focus:ring-0 text-sm md:text-base"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section A: Refleksi Guru (5 Question Cards) */}
+      <div className="bg-white p-5 md:p-6 rounded-xl border border-slate-200 shadow-2xs space-y-4">
+        <div className="border-b border-slate-200 pb-3 flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-slate-900 text-sm md:text-base flex items-center gap-2">
+              <span className="w-6 h-6 rounded-md bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-mono font-bold">
+                A
+              </span>
+              <span>REFLEKSI DIRI GURU SETELAH PEMBELAJARAN (5 PERTANYAAN PEMANDU)</span>
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Guru menyampaikan penilaian mandiri mengenai proses, respon murid, dan kendala yang dihadapi
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4 text-xs md:text-sm">
+          {/* Card 1: Perasaan */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center gap-2 font-bold text-slate-800 mb-2 text-sm md:text-base">
+              <Smile className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>1. Bagaimana perasaan Anda saat dan setelah melaksanakan pembelajaran tadi?</span>
+            </div>
+            <textarea
+              rows={2}
+              value={formData.refleksiGuru.perasaan}
+              onChange={(e) => handleRefleksiChange('perasaan', e.target.value)}
+              className="print:hidden w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-hidden text-xs md:text-sm"
+              placeholder="Ekspresi perasaan dan suasana batin guru saat mengajar..."
+            />
+            <div className="hidden print:block text-xs md:text-sm">
+              {isPrintBlank ? (
+                <div className="space-y-2.5 pt-1">
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                </div>
+              ) : (
+                <div className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-900 leading-relaxed whitespace-pre-wrap">
+                  {formData.refleksiGuru.perasaan || '-'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card 2: Hal yang Berjalan Baik */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center gap-2 font-bold text-slate-800 mb-2 text-sm md:text-base">
+              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>2. Apa saja hal yang sudah berjalan dengan baik dan sesuai dengan rencana Modul Ajar?</span>
+            </div>
+            <textarea
+              rows={2}
+              value={formData.refleksiGuru.halBaik}
+              onChange={(e) => handleRefleksiChange('halBaik', e.target.value)}
+              className="print:hidden w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-hidden text-xs md:text-sm"
+              placeholder="Momen keberhasilan, metode yang efektif, antusiasme belajar..."
+            />
+            <div className="hidden print:block text-xs md:text-sm">
+              {isPrintBlank ? (
+                <div className="space-y-2.5 pt-1">
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                </div>
+              ) : (
+                <div className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-900 leading-relaxed whitespace-pre-wrap">
+                  {formData.refleksiGuru.halBaik || '-'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card 3: Tantangan / Kendala */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center gap-2 font-bold text-slate-800 mb-2 text-sm md:text-base">
+              <AlertOctagon className="w-4 h-4 text-rose-500 shrink-0" />
+              <span>3. Apa tantangan atau kendala utama yang Anda hadapi selama pembelajaran berlangsung?</span>
+            </div>
+            <textarea
+              rows={2}
+              value={formData.refleksiGuru.tantangan}
+              onChange={(e) => handleRefleksiChange('tantangan', e.target.value)}
+              className="print:hidden w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-hidden text-xs md:text-sm"
+              placeholder="Kendala waktu, sarana, miskonsepsi materi, atau kondisi murid..."
+            />
+            <div className="hidden print:block text-xs md:text-sm">
+              {isPrintBlank ? (
+                <div className="space-y-2.5 pt-1">
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                </div>
+              ) : (
+                <div className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-900 leading-relaxed whitespace-pre-wrap">
+                  {formData.refleksiGuru.tantangan || '-'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card 4: Respon Murid */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center gap-2 font-bold text-slate-800 mb-2 text-sm md:text-base">
+              <Sparkles className="w-4 h-4 text-sky-500 shrink-0" />
+              <span>4. Bagaimana respon, keaktifan, dan tingkat keterlibatan murid dalam aktivitas kelas?</span>
+            </div>
+            <textarea
+              rows={2}
+              value={formData.refleksiGuru.responMurid}
+              onChange={(e) => handleRefleksiChange('responMurid', e.target.value)}
+              className="print:hidden w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-hidden text-xs md:text-sm"
+              placeholder="Tingkat partisipasi kelompok, murid yang pasif vs aktif..."
+            />
+            <div className="hidden print:block text-xs md:text-sm">
+              {isPrintBlank ? (
+                <div className="space-y-2.5 pt-1">
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                </div>
+              ) : (
+                <div className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-900 leading-relaxed whitespace-pre-wrap">
+                  {formData.refleksiGuru.responMurid || '-'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card 5: Rencana Perbaikan */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center gap-2 font-bold text-slate-800 mb-2 text-sm md:text-base">
+              <HelpCircle className="w-4 h-4 text-indigo-600 shrink-0" />
+              <span>5. Apa rencana perbaikan atau inovasi yang akan Anda lakukan untuk pembelajaran berikutnya?</span>
+            </div>
+            <textarea
+              rows={2}
+              value={formData.refleksiGuru.rencanaPerbaikan}
+              onChange={(e) => handleRefleksiChange('rencanaPerbaikan', e.target.value)}
+              className="print:hidden w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-hidden text-xs md:text-sm"
+              placeholder="Gagasan inovasi, diferensiasi baru, atau perbaikan strategi mengajar..."
+            />
+            <div className="hidden print:block text-xs md:text-sm">
+              {isPrintBlank ? (
+                <div className="space-y-2.5 pt-1">
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                </div>
+              ) : (
+                <div className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-900 leading-relaxed whitespace-pre-wrap">
+                  {formData.refleksiGuru.rencanaPerbaikan || '-'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section B: Umpan Balik Supervisor Table across 5 aspects */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+        <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200">
+          <h3 className="font-bold text-slate-900 text-sm md:text-base flex items-center gap-2">
+            <span className="w-6 h-6 rounded-md bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-mono font-bold">
+              B
+            </span>
+            <span>UMPAN BALIK SUPERVISOR / PENGAWAS PENDAMPING (5 ASPEK UTAMA)</span>
+          </h3>
+          <p className="text-xs md:text-sm text-slate-500 mt-0.5">
+            Apresiasi atas praktik baik yang telah muncul dan rekomendasi area pengembangan secara konstruktif
+          </p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs md:text-sm border-collapse">
+            <thead>
+              <tr className="bg-slate-100 text-slate-800 border-b border-slate-200 font-semibold uppercase tracking-wider text-xs md:text-sm">
+                <th className="py-3 px-4 w-48">Aspek Penilaian</th>
+                <th className="py-3 px-4 min-w-[260px]">Apresiasi / Kekuatan yang Tampak</th>
+                <th className="py-3 px-4 min-w-[260px]">Area yang Perlu Ditingkatkan / Rekomendasi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 text-slate-700">
+              {formData.umpanBalik.map((ub) => (
+                <tr key={ub.id} className="hover:bg-slate-50/70">
+                  <td className="py-3 px-4 font-bold text-slate-900 align-top bg-slate-50/50 text-xs md:text-sm">
+                    {ub.aspek}
+                  </td>
+                  <td className="py-3 px-4 align-top">
+                    <textarea
+                      rows={2}
+                      value={ub.kekuatan}
+                      onChange={(e) => handleUmpanBalikChange(ub.id, 'kekuatan', e.target.value)}
+                      className="print:hidden w-full p-2 text-xs md:text-sm bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 focus:border-indigo-400 rounded-md focus:outline-hidden"
+                      placeholder="Kekuatan / praktik baik..."
+                    />
+                    <div className="hidden print:block text-xs md:text-sm leading-relaxed">
+                      {isPrintBlank ? (
+                        <div className="space-y-2 pt-1">
+                          <div className="border-b border-dashed border-slate-400 h-5"></div>
+                          <div className="border-b border-dashed border-slate-400 h-5"></div>
+                        </div>
+                      ) : (
+                        <div className="whitespace-pre-wrap">{ub.kekuatan || '-'}</div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 align-top">
+                    <textarea
+                      rows={2}
+                      value={ub.areaPengembangan}
+                      onChange={(e) => handleUmpanBalikChange(ub.id, 'areaPengembangan', e.target.value)}
+                      className="print:hidden w-full p-2 text-xs md:text-sm bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 focus:border-indigo-400 rounded-md focus:outline-hidden"
+                      placeholder="Rekomendasi area pengembangan..."
+                    />
+                    <div className="hidden print:block text-xs md:text-sm leading-relaxed">
+                      {isPrintBlank ? (
+                        <div className="space-y-2 pt-1">
+                          <div className="border-b border-dashed border-slate-400 h-5"></div>
+                          <div className="border-b border-dashed border-slate-400 h-5"></div>
+                        </div>
+                      ) : (
+                        <div className="whitespace-pre-wrap">{ub.areaPengembangan || '-'}</div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Section C: Rencana Tindak Lanjut Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+        <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-bold text-slate-900 text-sm md:text-base flex items-center gap-2">
+              <span className="w-6 h-6 rounded-md bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-mono font-bold">
+                C
+              </span>
+              <span>RENCANA TINDAK LANJUT SUPERVISI YANG DISEPAKATI BERSAMA</span>
+            </h3>
+            <p className="text-xs md:text-sm text-slate-500 mt-0.5">
+              Komitmen implementasi perbaikan nyata beserta penanggung jawab, jadwal, dan progres
+            </p>
+          </div>
+          <button
+            onClick={handleAddRTL}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs md:text-sm font-bold transition-colors print:hidden"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Tambah Butir RTL</span>
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs md:text-sm border-collapse">
+            <thead>
+              <tr className="bg-slate-100 text-slate-800 border-b border-slate-200 font-semibold uppercase tracking-wider text-xs md:text-sm">
+                <th className="py-3 px-3 text-center w-10">No</th>
+                <th className="py-3 px-4 min-w-[160px]">Aspek Pengembangan</th>
+                <th className="py-3 px-4 min-w-[240px]">Tindak Lanjut yang Disepakati</th>
+                <th className="py-3 px-4 min-w-[150px]">Penanggung Jawab</th>
+                <th className="py-3 px-4 min-w-[140px]">Waktu Pelaksanaan</th>
+                <th className="py-3 px-3 text-center min-w-[120px]">Status Progres</th>
+                <th className="py-3 px-3 text-center w-14 print:hidden">Hapus</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 text-slate-700">
+              {formData.rencanaTindakLanjut.map((rtl, index) => (
+                <tr key={rtl.id} className="hover:bg-slate-50/70">
+                  <td className="py-3 px-3 text-center font-bold text-slate-500">{index + 1}</td>
+                  <td className="py-3 px-4 font-semibold text-slate-900">
+                    <input
+                      type="text"
+                      value={rtl.aspek}
+                      onChange={(e) => handleRTLChange(rtl.id, 'aspek', e.target.value)}
+                      className="print:hidden w-full px-2 py-1 bg-transparent border-0 font-semibold text-slate-900 focus:ring-0 text-xs md:text-sm"
+                    />
+                    <div className="hidden print:block font-semibold text-xs md:text-sm text-slate-900">
+                      {rtl.aspek}
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    <textarea
+                      rows={2}
+                      value={rtl.tindakLanjut}
+                      onChange={(e) => handleRTLChange(rtl.id, 'tindakLanjut', e.target.value)}
+                      className="print:hidden w-full p-2 text-xs md:text-sm bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded focus:outline-hidden"
+                      placeholder="Uraian tindak lanjut..."
+                    />
+                    <div className="hidden print:block text-xs md:text-sm leading-relaxed">
+                      {isPrintBlank ? (
+                        <div className="space-y-2 pt-1">
+                          <div className="border-b border-dashed border-slate-400 h-5"></div>
+                          <div className="border-b border-dashed border-slate-400 h-5"></div>
+                        </div>
+                      ) : (
+                        <div className="whitespace-pre-wrap">{rtl.tindakLanjut || '-'}</div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    <input
+                      type="text"
+                      value={rtl.penanggungJawab}
+                      onChange={(e) => handleRTLChange(rtl.id, 'penanggungJawab', e.target.value)}
+                      className="print:hidden w-full px-2 py-1 text-xs md:text-sm bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded"
+                      placeholder="PJ kegiatan..."
+                    />
+                    <div className="hidden print:block text-xs md:text-sm">
+                      {isPrintBlank ? (
+                        <div className="border-b border-dashed border-slate-400 h-5 mt-2"></div>
+                      ) : (
+                        rtl.penanggungJawab || '-'
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    <input
+                      type="text"
+                      value={rtl.waktuPelaksanaan}
+                      onChange={(e) => handleRTLChange(rtl.id, 'waktuPelaksanaan', e.target.value)}
+                      className="print:hidden w-full px-2 py-1 text-xs md:text-sm bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded"
+                      placeholder="Target waktu..."
+                    />
+                    <div className="hidden print:block text-xs md:text-sm">
+                      {isPrintBlank ? (
+                        <div className="border-b border-dashed border-slate-400 h-5 mt-2"></div>
+                      ) : (
+                        rtl.waktuPelaksanaan || '-'
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-3 text-center">
+                    <select
+                      value={rtl.status}
+                      onChange={(e) =>
+                        handleRTLChange(
+                          rtl.id,
+                          'status',
+                          e.target.value as 'Direncanakan' | 'Dalam Proses' | 'Selesai'
+                        )
+                      }
+                      className={`print:hidden text-xs md:text-sm font-bold px-2 py-1 rounded-lg border text-center ${
+                        rtl.status === 'Selesai'
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          : rtl.status === 'Dalam Proses'
+                          ? 'bg-blue-100 text-blue-800 border-blue-300'
+                          : 'bg-amber-100 text-amber-800 border-amber-300'
+                      }`}
+                    >
+                      <option value="Direncanakan">Direncanakan</option>
+                      <option value="Dalam Proses">Dalam Proses</option>
+                      <option value="Selesai">Selesai</option>
+                    </select>
+                    <div className="hidden print:block text-center text-xs md:text-sm">
+                      {isPrintBlank ? (
+                        <span className="text-slate-400 font-normal">[ &nbsp;&nbsp; ]</span>
+                      ) : (
+                        <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
+                          rtl.status === 'Selesai'
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : rtl.status === 'Dalam Proses'
+                            ? 'bg-blue-100 text-blue-800 border-blue-300'
+                            : 'bg-amber-100 text-amber-800 border-amber-300'
+                        }`}>
+                          {rtl.status}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-3 text-center print:hidden">
+                    <button
+                      onClick={() => handleDeleteRTL(rtl.id)}
+                      className="p-1 rounded hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors"
+                      title="Hapus baris RTL"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Narrative Summary & Joint Agreement */}
+      <div className="bg-white p-5 md:p-6 rounded-xl border border-slate-200 shadow-2xs space-y-4">
+        <div className="border-b border-slate-200 pb-2">
+          <h3 className="font-bold text-slate-900 text-sm md:text-base flex items-center gap-2">
+            <FileText className="w-4 h-4 text-indigo-600 print:hidden" />
+            <span>D. CATATAN AKHIR SUPERVISOR & KESEPAKATAN BERSAMA</span>
+          </h3>
+        </div>
+
+        <div className="space-y-4 text-xs md:text-sm">
+          <div>
+            <label className="block font-semibold text-slate-800 mb-1 text-xs md:text-sm">
+              Catatan Akhir Pendamping / Supervisor:
+            </label>
+            <textarea
+              rows={3}
+              value={formData.catatanSupervisor}
+              onChange={(e) => setFormData({ ...formData, catatanSupervisor: e.target.value })}
+              placeholder="Catatan apresiasi dan motivasi dari Pengawas/Kepala Sekolah..."
+              className="print:hidden w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-hidden text-xs md:text-sm"
+            />
+            <div className="hidden print:block text-xs md:text-sm leading-relaxed">
+              {isPrintBlank ? (
+                <div className="space-y-3 pt-2">
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                </div>
+              ) : (
+                <div className="p-3 bg-white border border-slate-200 rounded-lg whitespace-pre-wrap">
+                  {formData.catatanSupervisor || '-'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-800 mb-1 text-xs md:text-sm">
+              Kesepakatan Bersama untuk Supervisi Lanjutan:
+            </label>
+            <textarea
+              rows={2}
+              value={formData.kesepakatanBersama}
+              onChange={(e) => setFormData({ ...formData, kesepakatanBersama: e.target.value })}
+              placeholder="Pernyataan komitmen bersama antara guru, kepala sekolah, dan pengawas..."
+              className="print:hidden w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-hidden text-xs md:text-sm"
+            />
+            <div className="hidden print:block text-xs md:text-sm leading-relaxed">
+              {isPrintBlank ? (
+                <div className="space-y-3 pt-2">
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                  <div className="border-b border-dashed border-slate-400 h-5"></div>
+                </div>
+              ) : (
+                <div className="p-3 bg-white border border-slate-200 rounded-lg whitespace-pre-wrap">
+                  {formData.kesepakatanBersama || '-'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 print:hidden">
+          <div className="text-xs text-slate-500">
+            {!isSavedAndComplete ? (
+              <span className="text-amber-600 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5" />
+                Lengkapi seluruh bagian A, B, C, D lalu simpan untuk membuka Rekapitulasi dan Analisis
+              </span>
+            ) : (
+              <span className="text-purple-600 flex items-center gap-1.5 font-medium">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                Instrumen 4 & RTL telah lengkap & tersimpan. Silakan lanjut ke Rekapitulasi dan Analisis.
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={handleSave}
+              className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs md:text-sm font-semibold shadow-xs flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <Save className="w-4 h-4" />
+              <span>Simpan Instrumen 4 & RTL</span>
+            </button>
+            <button
+              disabled={!isSavedAndComplete}
+              onClick={onNavigateNext}
+              className={`w-full sm:w-auto px-5 py-2.5 rounded-lg text-xs md:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                isSavedAndComplete
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-md cursor-pointer'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+              }`}
+              title={isSavedAndComplete ? 'Lanjut ke Rekapitulasi & Analisis' : 'Simpan instrumen dengan isian lengkap terlebih dahulu'}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>Rekapitulasi dan Analisis</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Signature Block */}
+      <SignatureBlock
+        school={school}
+        teacher={currentTeacher}
+        tanggalDokumen={formData.tanggalKegiatan}
+        signedPengawas={formData.ttdPengawas}
+        signedKepalaSekolah={formData.ttdKepalaSekolah}
+        signedGuru={formData.ttdGuru}
+        isBlankPrint={isPrintBlank}
+        onToggleSignature={(role) => {
+          if (role === 'pengawas') setFormData((p) => ({ ...p, ttdPengawas: !p.ttdPengawas }));
+          if (role === 'kepala') setFormData((p) => ({ ...p, ttdKepalaSekolah: !p.ttdKepalaSekolah }));
+          if (role === 'guru') setFormData((p) => ({ ...p, ttdGuru: !p.ttdGuru }));
+        }}
+      />
+
+      {/* Print PDF Choice Modal */}
+      <PrintModal
+        isOpen={showPrintModal}
+        onClose={() => setShowPrintModal(false)}
+        documentTitle="INSTRUMEN 4: LEMBAR PASCA OBSERVASI & RENCANA TINDAK LANJUT SUPERVISI"
+        teacherName={currentTeacher.namaGuru}
+        onPrintFilled={() => handleTriggerPrint(false)}
+        onPrintBlank={() => handleTriggerPrint(true)}
+      />
+    </div>
+  );
+};
